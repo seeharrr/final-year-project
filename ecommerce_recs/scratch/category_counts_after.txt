@@ -1,0 +1,18 @@
+CATEGORY COUNTS AFTER FIX
+==================================================
+  Accessories & Other: 665 products
+  Cameras: 786 products
+  Chargers & Cables: 557 products
+  Gaming: 479 products
+  Headphones: 591 products
+  Laptops: 759 products
+  Networking: 280 products
+  Other Electronics: 1136 products
+  Phones: 443 products
+  Power & Batteries: 451 products
+  Printers & Scanners: 845 products
+  Smart Home: 133 products
+  Speakers: 464 products
+  Storage: 479 products
+  TV & Display: 515 products
+  Wearables: 225 products

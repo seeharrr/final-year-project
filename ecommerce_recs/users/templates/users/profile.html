@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block title %}Profile | RecSys{% endblock %}
+{% block content %}
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm text-center p-4">
+            <div class="mb-3">
+                {% if user.avatar %}
+                    <img src="{{ user.avatar.url }}" alt="Avatar" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                {% else %}
+                    <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white mx-auto" style="width: 150px; height: 150px; font-size: 3rem;">
+                        {{ user.username|make_list|first|upper }}
+                    </div>
+                {% endif %}
+            </div>
+            <h4>{{ user.username }}</h4>
+            <p class="text-muted">{{ user.email }}</p>
+            <p>Member since: {{ user.created_at|date:"M Y" }}</p>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Profile Information</h5>
+                <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#editProfileForm">Edit Profile</button>
+            </div>
+            <div class="card-body">
+                <div class="collapse" id="editProfileForm">
+                    <form method="post" enctype="multipart/form-data" class="mb-4 pb-4 border-bottom">
+                        {% csrf_token %}
+                        <div class="mb-3"><label class="form-label fw-bold">Bio</label>{{ form.bio }}</div>
+                        <div class="mb-3"><label class="form-label fw-bold">Date of Birth</label>{{ form.date_of_birth }}</div>
+                        <div class="mb-3"><label class="form-label fw-bold">Avatar</label>{{ form.avatar }}</div>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <button type="button" class="btn btn-secondary ms-2" data-bs-toggle="collapse" data-bs-target="#editProfileForm">Cancel</button>
+                    </form>
+                </div>
+                <p><strong>Bio:</strong> {{ user.bio|default:"No bio provided." }}</p>
+                <p><strong>Date of Birth:</strong> {{ user.date_of_birth|default:"Not specified" }}</p>
+            </div>
+        </div>
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Account Settings</h5>
+                <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#editAccountForm">Edit Account</button>
+            </div>
+            <div class="card-body">
+                <div class="collapse" id="editAccountForm">
+                    <form method="post" action="{% url 'edit_account' %}" class="mb-4 pb-4 border-bottom">
+                        {% csrf_token %}
+                        <div class="mb-3"><label class="form-label fw-bold">Username</label>{{ account_form.username }}<div class="form-text">Letters, digits and @/./+/-/_ only.</div></div>
+                        <div class="mb-3"><label class="form-label fw-bold">Email Address</label>{{ account_form.email }}</div>
+                        <button type="submit" class="btn btn-primary">Save Account Info</button>
+                        <button type="button" class="btn btn-secondary ms-2" data-bs-toggle="collapse" data-bs-target="#editAccountForm">Cancel</button>
+                    </form>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6"><p class="mb-1"><strong>Username:</strong></p><p class="text-muted">{{ user.username }}</p></div>
+                    <div class="col-sm-6"><p class="mb-1"><strong>Email:</strong></p><p class="text-muted">{{ user.email|default:"Not set" }}</p></div>
+                </div>
+            </div>
+        </div>
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Change Password</h5>
+                <button class="btn btn-sm btn-outline-warning" type="button" data-bs-toggle="collapse" data-bs-target="#changePasswordForm">Change Password</button>
+            </div>
+            <div class="card-body">
+                <div class="collapse" id="changePasswordForm">
+                    <form method="post" action="{% url 'change_password' %}" class="mb-4 pb-4 border-bottom" id="passwordForm">
+                        {% csrf_token %}
+                        <div class="mb-3"><label class="form-label fw-bold">Current Password</label>{{ password_form.current_password }}</div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">New Password</label>{{ password_form.new_password }}
+                            <div class="mt-2"><div class="progress" style="height:6px;border-radius:3px;"><div class="progress-bar" id="pw-strength-bar" style="width:0%;transition:all .3s ease;"></div></div><small class="text-muted" id="pw-strength-text">Enter a password</small></div>
+                        </div>
+                        <div class="mb-3"><label class="form-label fw-bold">Confirm New Password</label>{{ password_form.confirm_password }}<div class="invalid-feedback" id="pw-match-feedback">Passwords do not match.</div></div>
+                        <button type="submit" class="btn btn-warning text-dark">Update Password</button>
+                        <button type="button" class="btn btn-secondary ms-2" data-bs-toggle="collapse" data-bs-target="#changePasswordForm">Cancel</button>
+                    </form>
+                </div>
+                <p class="text-muted mb-0">Use a strong password with at least 8 characters including numbers and special characters.</p>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const pwInput = document.getElementById('id_new_password');
+    const confirmInput = document.getElementById('id_confirm_password');
+    const strengthBar = document.getElementById('pw-strength-bar');
+    const strengthText = document.getElementById('pw-strength-text');
+    const matchFeedback = document.getElementById('pw-match-feedback');
+    if (pwInput) {
+        pwInput.addEventListener('input', function() {
+            const pw = this.value; let score = 0;
+            if (pw.length >= 8) score++; if (pw.length >= 12) score++;
+            if (/[A-Z]/.test(pw)) score++; if (/[0-9]/.test(pw)) score++;
+            if (/[^A-Za-z0-9]/.test(pw)) score++;
+            const levels = [{w:'0%',c:'#e2e8f0',t:'Enter a password'},{w:'20%',c:'#ef4444',t:'Very Weak'},{w:'40%',c:'#f97316',t:'Weak'},{w:'60%',c:'#eab308',t:'Fair'},{w:'80%',c:'#22c55e',t:'Strong'},{w:'100%',c:'#16a34a',t:'Very Strong'}];
+            const l = pw.length === 0 ? levels[0] : levels[Math.min(score, 5)];
+            strengthBar.style.width = l.w; strengthBar.style.backgroundColor = l.c;
+            strengthText.textContent = l.t; strengthText.style.color = l.c;
+        });
+    }
+    if (confirmInput && pwInput) {
+        confirmInput.addEventListener('input', function() {
+            if (this.value && this.value !== pwInput.value) { this.classList.add('is-invalid'); matchFeedback.style.display='block'; }
+            else { this.classList.remove('is-invalid'); matchFeedback.style.display='none'; }
+        });
+    }
+});
+</script>
+{% endblock %}

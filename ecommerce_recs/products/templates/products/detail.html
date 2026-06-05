@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.title }} | RecSys{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}" class="text-decoration-none">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'products:catalog' %}" class="text-decoration-none">Catalog</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ product.category.name }}</li>
+    </ol>
+</nav>
+
+<div class="row g-5 mb-5">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm p-4 d-flex align-items-center justify-content-center" style="min-height: 500px; background: white;">
+            {% if product.image_url %}
+                <img src="{{ product.image_url }}" alt="{{ product.title }}" class="img-fluid" style="max-height: 450px; object-fit: contain;">
+            {% else %}
+                <div class="text-center py-5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                    <p class="text-muted mt-3">No Image Available</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="ps-md-4">
+            {% if recommended %}
+                <span class="badge bg-primary mb-3 shadow-sm" style="font-size: 0.8rem;">✨ Recommended for you</span>
+            {% endif %}
+            
+            <h1 class="display-5 mb-2">{{ product.title }}</h1>
+            <p class="text-muted fs-5 mb-4">{{ product.brand|default:"Premium Brand" }}</p>
+            
+            <div class="d-flex align-items-center mb-4 pb-4 border-bottom">
+                <div class="rating-stars fs-4 me-3">
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= product.rating_stars %}★{% else %}☆{% endif %}
+                    {% endfor %}
+                </div>
+                <span class="text-muted">({{ product.avg_rating|floatformat:1 }} / 5.0) from {{ product.num_ratings }} global reviews</span>
+            </div>
+            
+            <div class="mb-5">
+                {% if product.price %}
+                <h2 class="display-4 fw-bold text-primary mb-2">${{ product.price }}</h2>
+                <p class="text-success small fw-bold">In Stock & Ready to Ship</p>
+                {% endif %}
+            </div>
+            
+            {% if product.description %}
+            <div class="mb-5">
+                <h5 class="fw-bold mb-3">Product Description</h5>
+                <p class="text-muted" style="line-height: 1.8;">{{ product.description }}</p>
+            </div>
+            {% endif %}
+            
+            <div class="d-grid gap-3 d-md-flex">
+                <form method="post" action="{% url 'products:add_to_cart' product.asin %}" class="flex-grow-1">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary btn-lg w-100 py-3">Add to Shopping Cart</button>
+                </form>
+                <button class="btn btn-outline-secondary btn-lg px-4 wishlist-btn" data-asin="{{ product.asin }}" title="Save Item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" 
+                         {% if user.is_authenticated and product in user.wishlist.products.all %}
+                             fill="currentColor" class="text-dark"
+                         {% else %}
+                             fill="none"
+                         {% endif %}
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if similar_products %}
+<div class="mt-5 pt-5 border-top">
+    <h3 class="section-title mb-4">You might also like</h3>
+    <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-4 mb-5">
+        {% for sim_product in similar_products %}
+        <div class="col">
+            <div class="card h-100 border-0 shadow-sm p-2">
+                {% if sim_product.image_url %}
+                    <img src="{{ sim_product.image_url }}" class="card-img-top" alt="{{ sim_product.title }}"
+                         style="height: 140px; object-fit: contain; padding: 10px;">
+                {% else %}
+                    <div class="bg-light text-center py-4 text-muted" style="height: 140px;">No Image</div>
+                {% endif %}
+                <div class="card-body p-2">
+                    <h6 class="card-title text-truncate small fw-bold mb-1" title="{{ sim_product.title }}">{{ sim_product.title }}</h6>
+                    <p class="text-primary fw-bold mb-2 small">${{ sim_product.price|default:"--" }}</p>
+                    <a href="{% url 'products:detail' sim_product.asin %}" class="btn btn-sm btn-outline-primary w-100 py-1" style="font-size: 0.7rem;">View</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="row mt-5 pt-5 border-top">
+    <div class="col-lg-8">
+        <h3 class="section-title mb-4">Customer Reviews</h3>
+        
+        {% if reviews %}
+            <div class="row g-4 mb-5">
+                {% for review in reviews %}
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h6 class="fw-bold mb-1">{{ review.user.username }}</h6>
+                                <div class="rating-stars small">
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <span class="text-muted small">{{ review.created_at|date:"M d, Y" }}</span>
+                        </div>
+                        <p class="mb-0 text-muted">{{ review.review_text }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="bg-light rounded-4 p-5 text-center mb-5">
+                <p class="text-muted mb-0">No reviews yet for this product. Be the first to share your thoughts!</p>
+            </div>
+        {% endif %}
+
+        {% if user.is_authenticated %}
+        <div class="card border-0 shadow-sm p-4 bg-white">
+            <h5 class="fw-bold mb-4">Write a Review</h5>
+            <form method="post" action="{% url 'products:add_review' product.asin %}">
+                {% csrf_token %}
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold small">Your Rating</label>
+                        <select name="rating" class="form-select border-0 bg-light shadow-none" required>
+                            <option value="5">5 Stars - Excellent</option>
+                            <option value="4">4 Stars - Good</option>
+                            <option value="3">3 Stars - Average</option>
+                            <option value="2">2 Stars - Poor</option>
+                            <option value="1">1 Star - Terrible</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold small">Detailed Review</label>
+                    <textarea name="review_text" rows="4" class="form-control border-0 bg-light shadow-none" required placeholder="Tell us more about your experience with this product..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary px-5">Submit Review</button>
+            </form>
+        </div>
+        {% else %}
+        <div class="alert alert-light border shadow-sm rounded-4 p-4 text-center">
+            <p class="mb-3">Log in to your account to share your feedback with the community.</p>
+            <a href="{% url 'login' %}" class="btn btn-primary px-4">Login Now</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

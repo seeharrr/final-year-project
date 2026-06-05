@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Your Cart | RecSys{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="mb-4">Your Shopping Cart</h2>
+
+        {% if cart.items.exists %}
+            <div id="cart-items-container">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="cart-table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th scope="col" class="ps-4">Product</th>
+                                        <th scope="col" class="text-center">Quantity</th>
+                                        <th scope="col" class="text-end">Price</th>
+                                        <th scope="col" class="text-end">Total</th>
+                                        <th scope="col" class="text-center pe-4" style="width: 60px;">Remove</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in cart.items.all %}
+                                    <tr id="cart-row-{{ item.id }}" class="cart-item-row">
+                                        <td class="ps-4 py-3 align-middle">
+                                            <div class="d-flex align-items-center">
+                                                {% if item.product.image_url %}
+                                                    <img src="{{ item.product.image_url }}" alt="{{ item.product.title }}" style="width: 50px; height: 50px; object-fit: contain; margin-right: 15px;">
+                                                {% else %}
+                                                    <div style="width: 50px; height: 50px; background: #eee; margin-right: 15px;" class="d-flex align-items-center justify-content-center text-muted small rounded">No Img</div>
+                                                {% endif %}
+                                                <div>
+                                                    <h6 class="mb-0"><a href="{% url 'products:detail' item.product.asin %}" class="text-decoration-none text-dark">{{ item.product.title|truncatechars:50 }}</a></h6>
+                                                    <small class="text-muted">{{ item.product.brand }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-center align-middle">
+                                            <div class="d-flex align-items-center justify-content-center gap-2">
+                                                <button class="btn btn-sm btn-outline-secondary rounded-circle qty-btn d-flex align-items-center justify-content-center"
+                                                        style="width: 30px; height: 30px; padding: 0;"
+                                                        data-item-id="{{ item.id }}" data-action="decrease" title="Decrease">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                                </button>
+                                                <span class="fw-bold item-quantity" id="qty-{{ item.id }}">{{ item.quantity }}</span>
+                                                <button class="btn btn-sm btn-outline-secondary rounded-circle qty-btn d-flex align-items-center justify-content-center"
+                                                        style="width: 30px; height: 30px; padding: 0;"
+                                                        data-item-id="{{ item.id }}" data-action="increase" title="Increase">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                                </button>
+                                            </div>
+                                        </td>
+                                        <td class="text-end align-middle">
+                                            {% if item.product.price %}${{ item.product.price }}{% else %}$0.00{% endif %}
+                                        </td>
+                                        <td class="text-end align-middle fw-bold" id="item-total-{{ item.id }}">
+                                            ${{ item.total_price|floatformat:2 }}
+                                        </td>
+                                        <td class="text-center align-middle pe-4">
+                                            <button class="btn btn-sm btn-outline-danger rounded-circle remove-btn d-flex align-items-center justify-content-center mx-auto"
+                                                    style="width: 32px; height: 32px; padding: 0;"
+                                                    data-item-id="{{ item.id }}" title="Remove item">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                                                </svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row justify-content-end" id="cart-summary">
+                <div class="col-md-5 col-lg-4">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body">
+                            <h5 class="card-title mb-4">Order Summary</h5>
+                            <div class="d-flex justify-content-between mb-3">
+                                <span>Subtotal</span>
+                                <span id="cart-subtotal">${{ cart.total_price|floatformat:2 }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3">
+                                <span>Shipping</span>
+                                <span class="text-success">Calculated at checkout</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between mb-4">
+                                <span class="fw-bold">Subtotal</span>
+                                <span class="fw-bold fs-5" id="cart-total">${{ cart.total_price|floatformat:2 }}</span>
+                            </div>
+                            <a href="{% url 'products:checkout' %}" class="btn btn-success w-100 py-2 fw-bold" id="checkout-btn">Proceed to Checkout</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty state (hidden initially) -->
+            <div id="cart-empty-state" class="text-center py-5" style="display: none;">
+                <div class="mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-muted opacity-50"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                </div>
+                <h3 class="text-muted mb-4">Your cart is empty</h3>
+                <a href="{% url 'products:catalog' %}" class="btn btn-primary btn-lg rounded-pill px-5">Continue Shopping</a>
+            </div>
+
+        {% else %}
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-muted opacity-50"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                </div>
+                <h3 class="text-muted mb-4">Your cart is empty</h3>
+                <a href="{% url 'products:catalog' %}" class="btn btn-primary btn-lg rounded-pill px-5">Continue Shopping</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

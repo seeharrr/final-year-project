@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Home | RecSys Engine{% endblock %}
+
+{% block content %}
+<section class="hero-section text-center text-lg-start d-flex align-items-center">
+    <div class="row w-100">
+        <div class="col-lg-7">
+            <h1 class="display-3 mb-3" style="letter-spacing: -2px;">Personalized Shopping, <span style="color: var(--primary)">Reimagined.</span></h1>
+            <p class="lead text-muted mb-4 fs-4">Welcome back, {{ user.username }}. Discover a curated selection of products picked specifically for your taste using our advanced AI engine.</p>
+            <div class="d-flex gap-3 justify-content-center justify-content-lg-start">
+                <a href="{% url 'products:catalog' %}" class="btn btn-primary px-4 py-2 fs-5">Explore Catalog</a>
+                <a href="#recommended" class="btn btn-outline-primary px-4 py-2 fs-5">Your Picks</a>
+            </div>
+        </div>
+        <div class="col-lg-5 d-none d-lg-flex align-items-center justify-content-center">
+            <div class="position-relative">
+                <div class="glass-card p-4 rounded-4 shadow-lg text-center" style="background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border: 1px solid white;">
+                    <div class="mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    </div>
+                    <h4 class="mb-2">AI-Driven</h4>
+                    <p class="text-muted small mb-0">Powered by Hybrid Recommendation Algorithms</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div id="recommended" class="mb-5">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h2 class="section-title mb-0">Recommended for you</h2>
+            <p class="text-muted">Tailored suggestions based on your interests</p>
+        </div>
+        <a href="{% url 'products:catalog' %}" class="text-primary fw-bold text-decoration-none">View All &rarr;</a>
+    </div>
+    
+    <div class="row flex-nowrap overflow-auto pb-4 custom-scroll" style="padding-left: 5px;">
+        {% for rec in recommendations %}
+        {% with p=rec.product|default:rec %}
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3" style="min-width: 300px;">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="position-relative">
+                    {% if p.image_url %}
+                        <img src="{{ p.image_url }}" class="card-img-top" alt="{{ p.title }}" 
+                             style="height: 220px; object-fit: contain; padding: 20px;">
+                    {% else %}
+                        <div class="bg-light text-muted text-center py-5" style="height: 220px; display: flex; align-items: center; justify-content: center;">No Image</div>
+                    {% endif %}
+                    <div class="position-absolute top-0 end-0 m-3">
+                        <span class="badge bg-{{ rec.source|default:'primary' }} shadow-sm">
+                            {% if rec.source == 'hybrid' %}Hybrid AI{% elif rec.source == 'realtime' %}Real-time AI{% elif rec.source == 'content' %}Content{% elif rec.source == 'collaborative' %}CF{% elif rec.source %}{{ rec.source }}{% else %}Trending{% endif %}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body d-flex flex-column p-4">
+                    <h6 class="card-title fw-bold mb-2 text-truncate-2" title="{{ p.title }}" style="height: 2.8rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">{{ p.title }}</h6>
+                    
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="rating-stars me-2">
+                            {% for i in "12345" %}{% if forloop.counter <= p.rating_stars|default:0 %}★{% else %}☆{% endif %}{% endfor %}
+                        </div>
+                        <small class="text-muted">({{ p.avg_rating|default:0.0|floatformat:1 }})</small>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-auto">
+                        {% if p.price %}
+                        <h5 class="mb-0 fw-bold text-primary">${{ p.price }}</h5>
+                        {% endif %}
+                        <a href="{% url 'products:detail' p.asin %}" class="btn btn-outline-primary btn-sm px-3 rounded-pill">View Detail</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <div class="p-5 bg-white rounded-4 shadow-sm">
+                <p class="text-muted mb-0">No recommendations yet. Start browsing to help us learn your style!</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="row g-5">
+    <div class="col-lg-8">
+        <h2 class="section-title">Trending Now</h2>
+        <div class="row row-cols-1 row-cols-md-2 g-4">
+            {% for product in trending|slice:":6" %}
+            <div class="col">
+                <div class="card h-100 border-0 shadow-sm flex-row align-items-center p-3">
+                    {% if product.image_url %}
+                        <img src="{{ product.image_url }}" alt="{{ product.title }}"
+                             style="width: 100px; height: 100px; object-fit: contain;">
+                    {% endif %}
+                    <div class="ms-3 flex-grow-1 overflow-hidden">
+                        <h6 class="text-truncate mb-1 fw-bold">{{ product.title }}</h6>
+                        <p class="text-primary mb-2 fw-bold small">${{ product.price|default:"--" }}</p>
+                        <a href="{% url 'products:detail' product.asin %}" class="btn btn-sm btn-link p-0 text-decoration-none">Quick View &rarr;</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        {% if recent_history %}
+        <h2 class="section-title">Recently Viewed</h2>
+        <div class="list-group list-group-flush shadow-sm rounded-4 overflow-hidden">
+            {% for history in recent_history|slice:":5" %}
+            <a href="{% url 'products:detail' history.product.asin %}" class="list-group-item list-group-item-action p-3 border-0 bg-white">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0" style="width: 50px;">
+                        <img src="{{ history.product.image_url }}" class="img-fluid rounded" alt="">
+                    </div>
+                    <div class="ms-3 flex-grow-1 overflow-hidden">
+                        <h6 class="mb-0 text-truncate small fw-bold">{{ history.product.title }}</h6>
+                        <small class="text-muted">{{ history.viewed_at|timesince }} ago</small>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
